@@ -5,6 +5,7 @@ public class ConstantsUtil {
 	private ConstantsUtil() {}
 	
 	public static final String REDIRECT_USUARIO = "principal/usuario.jsp";
+	public static final String REDIRECT_USUARIO_RELATORIO = "principal/relatorio-usuario.jsp";
 	public static final String REDIRECT_TELEFONE = "principal/telefone.jsp";
 	public static final String MSG = "msg";
 	public static final String ACAO = "acao";

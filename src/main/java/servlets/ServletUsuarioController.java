@@ -4,15 +4,18 @@ import static java.util.Objects.isNull;
 import static util.ConstantsUtil.ACAO;
 import static util.ConstantsUtil.MSG;
 import static util.ConstantsUtil.REDIRECT_USUARIO;
+import static util.ConstantsUtil.REDIRECT_USUARIO_RELATORIO;
 import static util.ConstantsUtil.TOTAL_PAGINA;
 import static util.ConstantsUtil.USUARIOS;
 import static util.ObjectUtil.isObjectValid;
+import static util.ObjectUtil.isObjectsNotValid;
 import static util.ObjectUtil.redirect;
 
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -55,12 +58,14 @@ public class ServletUsuarioController extends ServletGenericUtil {
 		    	} else if (acao.equals("deletar-ajax")) {
 		    		response.getWriter().write("Excluído com sucesso!");
 		    	} 
+	    		
 	    	} else if (isObjectValid(acao) && acao.equals("buscarUsuario-ajax")) {
 	    		String nomeBusca = request.getParameter("nomeBusca");
 	    		var dadosJsonUsuario = daoUsuarioRepository.buscarPorNome(nomeBusca, getUserLogado(request).getId());
 	    		var json = new ObjectMapper().writeValueAsString(dadosJsonUsuario);
 	    		response.addHeader("totalPagina", "" + daoUsuarioRepository.getTotalPaginasPorNome(nomeBusca, getUserLogado(request).getId()));
 	    		response.getWriter().write(json);
+	    		
 	    	} else if (isObjectValid(acao) && acao.equals("buscarUsuario-ajax-page")) {
 	    		String nomeBusca = request.getParameter("nomeBusca");
 	    		String pagina = request.getParameter("pagina");
@@ -68,16 +73,19 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    		var json = new ObjectMapper().writeValueAsString(dadosJsonUsuario);
 	    		response.addHeader("totalPagina", "" + daoUsuarioRepository.getTotalPaginasPorNome(nomeBusca, getUserLogado(request).getId()));
 	    		response.getWriter().write(json);
+	    		
 	    	} else if (isObjectValid(acao) && acao.equals("buscarEditar")) {
 	    		msg = "Usuário em edição!";
 	    		String id = request.getParameter("id");
 	    		var modelLogin = daoUsuarioRepository.buscarPoId(id, getUserLogado(request).getId());
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodos(getUserLogado(request).getId());
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of("modelLogin", modelLogin, MSG, msg, USUARIOS, usuarios, TOTAL_PAGINA, totalPagina));
+	    	
 	    	} else if (isObjectValid(acao) && acao.equals("listar")) {
 	    		msg = "Usuários carregados!";
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodos(getUserLogado(request).getId());
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of(USUARIOS, usuarios, MSG, msg, TOTAL_PAGINA, totalPagina));
+	    	
 	    	} else if (isObjectValid(acao) && acao.equals("downloadFoto")) {
 	    		String id = request.getParameter("id");
 	    		var modelLogin = daoUsuarioRepository.buscarPoId(id, getUserLogado(request).getId());
@@ -85,10 +93,24 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    			response.setHeader("Content-Disposition", "attachment;filename=arquivo." + modelLogin.getExtensaoFoto());
 	    			response.getOutputStream().write(Base64.decodeBase64(modelLogin.getFoto().split("\\,")[1]));
 	    		}
+	    	
 	    	} else if(isObjectValid(acao) && acao.equals("paginar")) {
 	    		Integer offset = Integer.parseInt(request.getParameter("pagina"));
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodosPaginado(getUserLogado(request).getId(), offset);
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of(MSG, msg, USUARIOS, usuarios, TOTAL_PAGINA, totalPagina));
+	    	
+	    	} else if(isObjectValid(acao) && acao.equals("imprimir-relatorio-usuario")) {
+	    		String dataInicial = request.getParameter("dataInicial");
+	    		String dataFinal = request.getParameter("dataFinal");
+	    		
+	    		Map<String, Object> parameters = new HashMap<>(Map.of("dataInicial", dataInicial, "dataFinal", dataFinal));
+	    		
+	    		if (isObjectsNotValid(dataInicial, dataFinal)) {
+	    			parameters.put("listaDeTodosOsUsuarios", daoUsuarioRepository.listarTodosSemLimit(getUserLogado(request).getId()));
+	    		}
+	    		
+	    		redirect(request, response, REDIRECT_USUARIO_RELATORIO, parameters);
+	    	
 	    	} else {
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodos(getUserLogado(request).getId());
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of(MSG, msg, USUARIOS, usuarios, TOTAL_PAGINA, totalPagina));

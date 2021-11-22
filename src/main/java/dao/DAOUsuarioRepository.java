@@ -66,6 +66,11 @@ public class DAOUsuarioRepository implements Serializable {
 		return buscarUsuario(objeto.getLogin(), usuarioLogado);
 	}
 	
+	public List<ModelLogin> listarTodosSemLimit(Long usuarioLogado) throws SQLException {
+		var sql = "SELECT * FROM model_login WHERE useradmin IS FALSE AND usuario_id = ?";
+		return consultar(sql, false, false, false, usuarioLogado);
+	}
+	
 	public List<ModelLogin> listarTodos(Long usuarioLogado) throws SQLException {
 		var sql = "SELECT * FROM model_login WHERE useradmin IS FALSE AND usuario_id = ? LIMIT 5";
 		return consultar(sql, false, false, false, usuarioLogado);
@@ -115,9 +120,9 @@ public class DAOUsuarioRepository implements Serializable {
 		List<ModelLogin> retorno = new ArrayList<>();
 		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			if (nonNull(parametros)) {
-				if (parametros[0] instanceof String) statement.setString(1, (String) parametros[0]);
-				if (parametros[0] instanceof Long) statement.setLong(1, (Long) parametros[0]);
-				if (parametros.length > 1 && parametros[1] instanceof Long) statement.setLong(2, (Long) parametros[1]);
+				if (parametros[0] instanceof String parameter) statement.setString(1, parameter);
+				if (parametros[0] instanceof Long parameter) statement.setLong(1, parameter);
+				if (parametros.length > 1 && parametros[1] instanceof Long parameter) statement.setLong(2, parameter);
 			}
 			ResultSet resultado = statement.executeQuery();
 			while (resultado.next()) {

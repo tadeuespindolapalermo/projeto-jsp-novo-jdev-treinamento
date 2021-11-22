@@ -27,6 +27,10 @@ public class ObjectUtil {
 		return true;
 	}
 	
+	public static boolean isObjectsNotValid(Object... objects) {
+		return !isObjectsValid(objects);
+	}
+	
 	public static void redirect(HttpServletRequest request, HttpServletResponse response, String path, Map<String, Object> attributes)
 			throws ServletException, IOException {
 		attributes.entrySet().forEach(att -> request.setAttribute(att.getKey(), att.getValue()));		
