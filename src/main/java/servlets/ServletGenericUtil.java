@@ -2,6 +2,7 @@ package servlets;
 
 import java.io.Serializable;
 import java.sql.SQLException;
+import java.text.ParseException;
 
 import dao.DAOUsuarioRepository;
 import jakarta.servlet.http.HttpServlet;
@@ -18,7 +19,7 @@ public class ServletGenericUtil extends HttpServlet implements Serializable {
 		daoUsuarioRepository = new DAOUsuarioRepository();
 	}
 
-	public ModelLogin getUserLogado(HttpServletRequest request) throws SQLException {
+	public ModelLogin getUserLogado(HttpServletRequest request) throws SQLException, ParseException {
 		String usuarioLogado = (String) request.getSession().getAttribute("usuario");
 		return daoUsuarioRepository.buscarUsuarioLogado(usuarioLogado);
 	}

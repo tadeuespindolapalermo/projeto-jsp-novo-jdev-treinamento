@@ -5,14 +5,18 @@ import static util.ObjectUtil.isObjectValid;
 
 import java.io.Serializable;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 
 import connection.SingleConnection;
 import model.ModelLogin;
+import model.ModelTelefone;
 
 public class DAOUsuarioRepository implements Serializable {
 	
@@ -24,7 +28,7 @@ public class DAOUsuarioRepository implements Serializable {
 		connection = SingleConnection.getConnection();
 	}
 	
-	public ModelLogin gravarUsuario(ModelLogin objeto, Long usuarioLogado) throws SQLException {
+	public ModelLogin gravarUsuario(ModelLogin objeto, Long usuarioLogado) throws SQLException, ParseException {
 		var index = 0;
 		var sql = objeto.isNovo() ?
 			"INSERT INTO model_login (rendamensal, datanascimento, cep, logradouro, bairro, localidade, uf, numero, sexo, perfil, login, senha, nome, email, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" :
@@ -66,63 +70,72 @@ public class DAOUsuarioRepository implements Serializable {
 		return buscarUsuario(objeto.getLogin(), usuarioLogado);
 	}
 	
-	public List<ModelLogin> listarTodosSemLimit(Long usuarioLogado) throws SQLException {
+	public List<ModelLogin> listarTodosSemLimit(Long usuarioLogado) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE useradmin IS FALSE AND usuario_id = ?";
-		return consultar(sql, false, false, false, usuarioLogado);
+		return consultar(sql, false, false, false, true, false, usuarioLogado);
 	}
 	
-	public List<ModelLogin> listarTodos(Long usuarioLogado) throws SQLException {
+	public List<ModelLogin> listarTodosSemLimitPorPeriodo(Long usuarioLogado, String dataInicial, String dataFinal) throws SQLException, ParseException {
+		var sql = "SELECT * FROM model_login WHERE useradmin IS FALSE AND usuario_id = ? AND datanascimento >= ? AND datanascimento <= ?";
+		return consultar(sql, false, false, false, true, true, usuarioLogado, dataInicial, dataFinal);
+	}
+	
+	public List<ModelLogin> listarTodos(Long usuarioLogado) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE useradmin IS FALSE AND usuario_id = ? LIMIT 5";
-		return consultar(sql, false, false, false, usuarioLogado);
+		return consultar(sql, false, false, false, false, false, usuarioLogado);
 	}
 	
-	public List<ModelLogin> listarTodosPaginado(Long usuarioLogado, Integer offset) throws SQLException {
+	public List<ModelLogin> listarTodosPaginado(Long usuarioLogado, Integer offset) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE useradmin IS FALSE AND usuario_id = ? ORDER BY nome OFFSET " + offset + " LIMIT 5";
-		return consultar(sql, false, false, false, usuarioLogado);
+		return consultar(sql, false, false, false, false, false, usuarioLogado);
 	}
 	
-	public List<ModelLogin> buscarPorNome(String nome, Long usuarioLogado) throws SQLException {
+	public List<ModelLogin> buscarPorNome(String nome, Long usuarioLogado) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE UPPER(nome) LIKE UPPER(?) AND useradmin IS FALSE AND usuario_id = ? LIMIT 5";
-		return consultar(sql, false, false, false, "%" + nome + "%", usuarioLogado);
+		return consultar(sql, false, false, false, false, false, "%" + nome + "%", usuarioLogado);
 	}
 	
-	public List<ModelLogin> buscarPorNomePaginado(String nome, Long usuarioLogado, String offset) throws SQLException {
+	public List<ModelLogin> buscarPorNomePaginado(String nome, Long usuarioLogado, String offset) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE UPPER(nome) LIKE UPPER(?) AND useradmin IS FALSE AND usuario_id=? OFFSET " + offset + " LIMIT 5";
-		return consultar(sql, false, false, false, "%" + nome + "%", usuarioLogado);
+		return consultar(sql, false, false, false, false, false, "%" + nome + "%", usuarioLogado);
 	}
 	
-	public ModelLogin buscarPoId(String id, Long usuarioLogado) throws SQLException {
+	public ModelLogin buscarPoId(String id, Long usuarioLogado) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE id = ? AND useradmin IS FALSE AND usuario_id = ?";
-		return consultar(sql, true, true, true, Long.parseLong(id), usuarioLogado).stream().findFirst().orElse(new ModelLogin());
+		return consultar(sql, true, true, true, false, false, Long.parseLong(id), usuarioLogado).stream().findFirst().orElse(new ModelLogin());
 	}
 	
-	public ModelLogin buscarPoId(Long id) throws SQLException {
+	public ModelLogin buscarPoId(Long id) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE id = ? AND useradmin IS FALSE";
-		return consultar(sql, true, true, true, id).stream().findFirst().orElse(new ModelLogin());
+		return consultar(sql, true, true, true, false, false, id).stream().findFirst().orElse(new ModelLogin());
 	}
 	
-	public ModelLogin buscarUsuario(String login, Long usuarioLogado) throws SQLException {
+	public ModelLogin buscarUsuario(String login, Long usuarioLogado) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE UPPER(login) = UPPER(?) AND useradmin IS FALSE AND usuario_id = ?";
-		return consultar(sql, true, true, true, login, usuarioLogado).stream().findFirst().orElse(new ModelLogin());
+		return consultar(sql, true, true, true, false, false, login, usuarioLogado).stream().findFirst().orElse(new ModelLogin());
 	}
 	
-	public ModelLogin buscarUsuario(String login) throws SQLException {
+	public ModelLogin buscarUsuario(String login) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE UPPER(login) = UPPER(?) AND useradmin IS FALSE";
-		return consultar(sql, true, true, true, login).stream().findFirst().orElse(new ModelLogin());
+		return consultar(sql, true, true, true, false, false, login).stream().findFirst().orElse(new ModelLogin());
 	}
 	
-	public ModelLogin buscarUsuarioLogado(String login) throws SQLException {
+	public ModelLogin buscarUsuarioLogado(String login) throws SQLException, ParseException {
 		var sql = "SELECT * FROM model_login WHERE UPPER(login) = UPPER(?)";
-		return consultar(sql, true, true, true, login).stream().findFirst().orElse(new ModelLogin());
+		return consultar(sql, true, true, true, false, false, login).stream().findFirst().orElse(new ModelLogin());
 	}
 	
-	private List<ModelLogin> consultar(String sql, boolean renderPassword, boolean renderFoto, boolean renderEndereco, Object... parametros) throws SQLException {
+	private List<ModelLogin> consultar(String sql, boolean renderPassword, boolean renderFoto, boolean renderEndereco, boolean renderTelefone, boolean renderPeriodo, Object... parametros) throws SQLException, ParseException {
 		List<ModelLogin> retorno = new ArrayList<>();
 		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			if (nonNull(parametros)) {
 				if (parametros[0] instanceof String parameter) statement.setString(1, parameter);
 				if (parametros[0] instanceof Long parameter) statement.setLong(1, parameter);
 				if (parametros.length > 1 && parametros[1] instanceof Long parameter) statement.setLong(2, parameter);
+				if (renderPeriodo) {
+					statement.setDate(2, Date.valueOf(new SimpleDateFormat("yyyy-mm-dd").format(new SimpleDateFormat("dd/mm/yyyy").parse((String) parametros[1]))));
+					statement.setDate(3, Date.valueOf(new SimpleDateFormat("yyyy-mm-dd").format(new SimpleDateFormat("dd/mm/yyyy").parse((String) parametros[2]))));
+				}
 			}
 			ResultSet resultado = statement.executeQuery();
 			while (resultado.next()) {
@@ -141,10 +154,17 @@ public class DAOUsuarioRepository implements Serializable {
 					resultado.getDouble("rendamensal")
 				);	
 				if (renderEndereco) preencherEndereco(modelLogin, resultado);
+				if (renderTelefone)	preencherTelefone(modelLogin);
 				retorno.add(modelLogin);
 			}
 		}
 		return retorno;
+	}
+	
+	private void preencherTelefone(ModelLogin modelLogin) throws SQLException, ParseException {
+		var telefones = consultarTelefones(modelLogin.getId());
+		if (!telefones.isEmpty())
+			modelLogin.setTelefones(telefones);
 	}
 	
 	private void preencherEndereco(ModelLogin modelLogin, ResultSet resultado) throws SQLException {
@@ -201,6 +221,24 @@ public class DAOUsuarioRepository implements Serializable {
 		Double resto = pagina % 2;
 		if (resto > 0) pagina ++;
 		return pagina.intValue();
+	}
+	
+	private List<ModelTelefone> consultarTelefones(Long isUsuarioPai) throws SQLException, ParseException {
+		var sql = "SELECT * FROM telefone WHERE usuario_pai_id = ?";
+		List<ModelTelefone> retorno = new ArrayList<>();
+		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+			statement.setLong(1, isUsuarioPai);
+			ResultSet resultado = statement.executeQuery();
+			while (resultado.next()) {
+				retorno.add(new ModelTelefone(
+					resultado.getLong("id"),
+					resultado.getString("numero"),
+					buscarPoId(resultado.getLong("usuario_pai_id")),
+					buscarPoId(resultado.getLong("usuario_cad_id"))
+				));
+			}
+		}
+		return retorno;
 	}
 
 }

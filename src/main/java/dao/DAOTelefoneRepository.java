@@ -7,6 +7,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,12 +40,12 @@ public class DAOTelefoneRepository implements Serializable {
 		}
 	}
 	
-	public List<ModelTelefone> listarTelefonesDoUsuario(Long idUsuarioPai) throws SQLException {
+	public List<ModelTelefone> listarTelefonesDoUsuario(Long idUsuarioPai) throws SQLException, ParseException {
 		var sql = "SELECT * FROM telefone WHERE usuario_pai_id = ?";
 		return consultar(sql, idUsuarioPai);
 	}
 	
-	private List<ModelTelefone> consultar(String sql, Object... parametros) throws SQLException {
+	private List<ModelTelefone> consultar(String sql, Object... parametros) throws SQLException, ParseException {
 		List<ModelTelefone> retorno = new ArrayList<>();
 		try (PreparedStatement statement = connection.prepareStatement(sql)) {
 			if (nonNull(parametros)) {

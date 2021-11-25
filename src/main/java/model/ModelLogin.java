@@ -4,6 +4,8 @@ import static java.util.Objects.isNull;
 
 import java.io.Serializable;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ModelLogin implements Serializable {
 
@@ -18,6 +20,7 @@ public class ModelLogin implements Serializable {
 	private String sexo;
 	private Date dataNascimento;
 	private Double rendaMensal;
+	private List<ModelTelefone> telefones = new ArrayList<>();
 
 	// Credenciais
 	private String login;
@@ -218,6 +221,14 @@ public class ModelLogin implements Serializable {
 
 	public Double getRendaMensal() {
 		return rendaMensal;
+	}
+	
+	public void setTelefones(List<ModelTelefone> telefones) {
+		this.telefones = telefones;
+	}
+	
+	public List<ModelTelefone> getTelefones() {
+		return telefones;
 	}
 
 	@Override

@@ -76,16 +76,20 @@
 															    </tr>
 															  </thead>
 															  <tbody>
-															  	<c:forEach items="${listaDeTodosOsUsuarios}" var="u"> 
+															  	<c:forEach items="${listaDeTodosOsUsuarios}" var="usuario"> 
 															  		<tr>
-															  			<td><c:out value="${u.id}"></c:out></td>
-															  			<td><c:out value="${u.nome}"></c:out></td>
-															  		</tr>
+															  			<td><c:out value="${usuario.id}"></c:out></td>
+															  			<td><c:out value="${usuario.nome}"></c:out></td>
+															  			<td>
+															  				<c:forEach items="${usuario.telefones}" var="fone">
+																  				<c:out value="${fone.numero}"></c:out><br/>
+																  			</c:forEach>
+															  			</td>
+															  		</tr>														  		
 															  	</c:forEach>
 															  </tbody>
 															</table>
 														</div>
-										
                                                     </div>
                                                 </div>
                                             </div>

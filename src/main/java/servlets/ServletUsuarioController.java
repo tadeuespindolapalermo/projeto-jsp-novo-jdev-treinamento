@@ -13,7 +13,6 @@ import static util.ObjectUtil.redirect;
 
 import java.io.IOException;
 import java.sql.Date;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -107,6 +106,8 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    		
 	    		if (isObjectsNotValid(dataInicial, dataFinal)) {
 	    			parameters.put("listaDeTodosOsUsuarios", daoUsuarioRepository.listarTodosSemLimit(getUserLogado(request).getId()));
+	    		} else {
+	    			parameters.put("listaDeTodosOsUsuarios", daoUsuarioRepository.listarTodosSemLimitPorPeriodo(getUserLogado(request).getId(), dataInicial, dataFinal));
 	    		}
 	    		
 	    		redirect(request, response, REDIRECT_USUARIO_RELATORIO, parameters);
@@ -179,7 +180,7 @@ public class ServletUsuarioController extends ServletGenericUtil {
 		}
 	}
 	
-	private void preencherEndereco(ModelLogin modelLogin, String... dados) throws SQLException {
+	private void preencherEndereco(ModelLogin modelLogin, String... dados) {
 		modelLogin.getEndereco().setCep(dados[0]);
 		modelLogin.getEndereco().setLogradouro(dados[1]);
 		modelLogin.getEndereco().setBairro(dados[2]);
