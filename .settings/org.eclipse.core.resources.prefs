@@ -1,2 +1,3 @@
 eclipse.preferences.version=1
-encoding//src/main/java/relatorio/relatorio-usuario.jrxml=UTF-8
+encoding//src/main/webapp/relatorio/relatorio-usuario.jrxml=UTF-8
+encoding//src/main/webapp/relatorio/sub_report_usuario.jrxml=UTF-8

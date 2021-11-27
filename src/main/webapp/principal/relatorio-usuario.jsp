@@ -47,7 +47,7 @@
 	                                                         method="get" 
 	                                                         id="formUserRelatorio">	
 	                                                         
-	                                                         <input type="hidden" name="acao" value="imprimir-relatorio-usuario" />
+	                                                         <input type="hidden" id="acaoTipoRelatorio" name="acao" value="imprimir-relatorio-usuario-tela" />
 	                                                                                                                
                                                        		 <div class="form-row align-items-center">
                                                        		 
@@ -62,7 +62,8 @@
 															    </div>														    
 															  
 															    <div class="col-auto my-1">
-															      <button type="submit" class="btn btn-primary">Imprimir Relatório</button>
+															      <button type="button" onclick="imprimirHtml();" class="btn btn-primary">Imprimir Relatório</button>
+															      <button type="button" onclick="imprimirPDF();" class="btn btn-primary">Imprimir PDF</button>
 															    </div>
 														    </div>
                                                        </form>
@@ -110,6 +111,16 @@
     <jsp:include page="javascriptfile.jsp"></jsp:include>
     
     <script type="text/javascript">
+	    function imprimirPDF() {
+	    	document.getElementById("acaoTipoRelatorio").value = "imprimir-relatorio-usuario-PDF";
+    		$("#formUserRelatorio").submit();
+	    }
+	    
+    	function imprimirHtml() {
+    		document.getElementById("acaoTipoRelatorio").value = "imprimir-relatorio-usuario-tela";
+    		$("#formUserRelatorio").submit();
+    	}
+    	
 	    $(function() {
 		    $("#dataInicial").datepicker({
 	  		    dateFormat: 'dd/mm/yy',

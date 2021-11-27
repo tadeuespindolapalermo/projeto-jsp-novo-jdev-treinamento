@@ -11,6 +11,7 @@ import static util.ObjectUtil.isObjectValid;
 import static util.ObjectUtil.isObjectsNotValid;
 import static util.ObjectUtil.redirect;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.Date;
 import java.text.SimpleDateFormat;
@@ -31,6 +32,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.ModelLogin;
+import util.ReportUtil;
 
 @MultipartConfig
 @WebServlet(urlPatterns = {"/ServletUsuarioController"})
@@ -98,7 +100,7 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodosPaginado(getUserLogado(request).getId(), offset);
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of(MSG, msg, USUARIOS, usuarios, TOTAL_PAGINA, totalPagina));
 	    	
-	    	} else if(isObjectValid(acao) && acao.equals("imprimir-relatorio-usuario")) {
+	    	} else if(isObjectValid(acao) && acao.equals("imprimir-relatorio-usuario-tela")) {
 	    		String dataInicial = request.getParameter("dataInicial");
 	    		String dataFinal = request.getParameter("dataFinal");
 	    		
@@ -112,6 +114,19 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    		
 	    		redirect(request, response, REDIRECT_USUARIO_RELATORIO, parameters);
 	    	
+	    	} else if(isObjectValid(acao) && acao.equals("imprimir-relatorio-usuario-PDF")) {
+	    		String dataInicial = request.getParameter("dataInicial");
+	    		String dataFinal = request.getParameter("dataFinal");
+	    		
+	    		var usuarios = isObjectsNotValid(dataInicial, dataFinal)
+    				? daoUsuarioRepository.listarTodosSemLimit(getUserLogado(request).getId())
+					: daoUsuarioRepository.listarTodosSemLimitPorPeriodo(getUserLogado(request).getId(), dataInicial, dataFinal);
+	    		
+	    		Map<String, Object> params = new HashMap<>();
+	    		params.put("PARAM_SUB_REPORT", request.getServletContext().getRealPath("relatorio") + File.separator);
+	    		byte[] relatorio = new ReportUtil().gerarRelatorioPDF(usuarios, "relatorio-usuario", params, request.getServletContext());
+    			response.setHeader("Content-Disposition", "attachment;filename=arquivo.pdf");
+    			response.getOutputStream().write(relatorio);
 	    	} else {
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodos(getUserLogado(request).getId());
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of(MSG, msg, USUARIOS, usuarios, TOTAL_PAGINA, totalPagina));
