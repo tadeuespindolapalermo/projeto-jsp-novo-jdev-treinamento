@@ -90,7 +90,7 @@ public class DAOUsuarioRepository implements Serializable {
 			if (isObjectValid(objeto.getFoto())) {
 				var where = objeto.isNovo() ? "login" : "id";
 				sql = "UPDATE model_login SET foto=?, extensaoFoto=? WHERE " + where + "=?";
-				try(PreparedStatement preparedUpdate = connection.prepareStatement(sql)) {
+				try(var preparedUpdate = connection.prepareStatement(sql)) {
 					preparedUpdate.setString(1, objeto.getFoto());
 					preparedUpdate.setString(2, objeto.getExtensaoFoto());
 					if (objeto.isNovo()) {
