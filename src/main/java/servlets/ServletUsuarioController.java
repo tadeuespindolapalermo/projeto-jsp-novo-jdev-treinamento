@@ -26,6 +26,7 @@ import org.apache.tomcat.util.http.fileupload.servlet.ServletFileUpload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dao.DAOUsuarioRepository;
+import dto.GraficoSalarioDTO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -71,9 +72,8 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    		String nomeBusca = request.getParameter("nomeBusca");
 	    		String pagina = request.getParameter("pagina");
 	    		var dadosJsonUsuario = daoUsuarioRepository.buscarPorNomePaginado(nomeBusca, getUserLogado(request).getId(), pagina);
-	    		var json = new ObjectMapper().writeValueAsString(dadosJsonUsuario);
 	    		response.addHeader("totalPagina", "" + daoUsuarioRepository.getTotalPaginasPorNome(nomeBusca, getUserLogado(request).getId()));
-	    		response.getWriter().write(json);
+	    		response.getWriter().write(new ObjectMapper().writeValueAsString(dadosJsonUsuario));
 	    		
 	    	} else if (isObjectValid(acao) && acao.equals("buscarEditar")) {
 	    		msg = "Usuário em edição!";
@@ -127,6 +127,17 @@ public class ServletUsuarioController extends ServletGenericUtil {
 	    		byte[] relatorio = new ReportUtil().gerarRelatorioPDF(usuarios, "relatorio-usuario", params, request.getServletContext());
     			response.setHeader("Content-Disposition", "attachment;filename=arquivo.pdf");
     			response.getOutputStream().write(relatorio);
+    			
+	    	} else if(isObjectValid(acao) && acao.equals("grafico-salario")) {
+	    		String dataInicial = request.getParameter("dataInicial");
+	    		String dataFinal = request.getParameter("dataFinal");
+	    		
+	    		GraficoSalarioDTO dtoGraficoSalario = isObjectsNotValid(dataInicial, dataFinal)
+    				? daoUsuarioRepository.montarGraficoMediaSalarial(getUserLogado(request).getId())
+    				: daoUsuarioRepository.montarGraficoMediaSalarial(getUserLogado(request).getId(), dataInicial, dataFinal);    	
+	    		
+	    		response.getWriter().write(new ObjectMapper().writeValueAsString(dtoGraficoSalario));
+	    		
 	    	} else {
 	    		List<ModelLogin> usuarios = daoUsuarioRepository.listarTodos(getUserLogado(request).getId());
 	    		redirect(request, response, REDIRECT_USUARIO, Map.of(MSG, msg, USUARIOS, usuarios, TOTAL_PAGINA, totalPagina));

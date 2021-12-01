@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import connection.SingleConnection;
+import dto.GraficoSalarioDTO;
 import model.ModelLogin;
 import model.ModelTelefone;
 
@@ -28,12 +29,47 @@ public class DAOUsuarioRepository implements Serializable {
 		connection = SingleConnection.getConnection();
 	}
 	
+	private GraficoSalarioDTO montarGraficoSalario(String sql, Object... parametros) throws SQLException, ParseException {
+		var graficoSalarioDTO = new GraficoSalarioDTO();
+		
+		try (var statement = connection.prepareStatement(sql)) {
+			statement.setLong(1, (Long) parametros[0]);
+			if (parametros.length > 1) {
+				statement.setDate(2, Date.valueOf(new SimpleDateFormat("yyyy-mm-dd").format(new SimpleDateFormat("dd/mm/yyyy").parse((String) parametros[1]))));
+				statement.setDate(3, Date.valueOf(new SimpleDateFormat("yyyy-mm-dd").format(new SimpleDateFormat("dd/mm/yyyy").parse((String) parametros[2]))));
+			}
+			var result = statement.executeQuery();
+			
+			var perfis = new ArrayList<String>();	
+			var salarios = new ArrayList<Double>();				
+			
+			while(result.next()) {
+				salarios.add(result.getDouble("media_salarial"));
+				perfis.add(result.getString("perfil"));
+			}
+			
+			graficoSalarioDTO.setPerfis(perfis);
+			graficoSalarioDTO.setSalarios(salarios);
+		}
+		return graficoSalarioDTO;
+	}
+	
+	public GraficoSalarioDTO montarGraficoMediaSalarial(Long idUsuarioLogado) throws SQLException, ParseException {
+		var sql = "SELECT AVG(rendamensal) AS media_salarial, perfil FROM model_login WHERE usuario_id = ? GROUP BY perfil";
+		return montarGraficoSalario(sql, idUsuarioLogado);
+	}
+	
+	public GraficoSalarioDTO montarGraficoMediaSalarial(Long idUsuarioLogado, String dataInicial, String dataFinal) throws SQLException, ParseException {
+		var sql = "SELECT AVG(rendamensal) AS media_salarial, perfil FROM model_login WHERE usuario_id = ? AND datanascimento >= ? AND datanascimento <= ? GROUP BY perfil";
+		return montarGraficoSalario(sql, idUsuarioLogado, dataInicial, dataFinal);
+	}
+	
 	public ModelLogin gravarUsuario(ModelLogin objeto, Long usuarioLogado) throws SQLException, ParseException {
 		var index = 0;
 		var sql = objeto.isNovo() ?
 			"INSERT INTO model_login (rendamensal, datanascimento, cep, logradouro, bairro, localidade, uf, numero, sexo, perfil, login, senha, nome, email, usuario_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" :
 			"UPDATE model_login SET rendamensal = ?, datanascimento = ?, cep=?, logradouro=?, bairro=?, localidade=?, uf=?, numero=?, sexo=?, perfil=?, login=?, senha=?, nome=?, email=? WHERE id=?";
-		try (PreparedStatement preparedInsert = connection.prepareStatement(sql)) {
+		try (var preparedInsert = connection.prepareStatement(sql)) {
 			preparedInsert.setDouble(++ index, objeto.getRendaMensal());
 			preparedInsert.setDate(++ index, objeto.getDataNascimento());
 			preparedInsert.setString(++ index, objeto.getEndereco().getCep());
@@ -126,8 +162,8 @@ public class DAOUsuarioRepository implements Serializable {
 	}
 	
 	private List<ModelLogin> consultar(String sql, boolean renderPassword, boolean renderFoto, boolean renderEndereco, boolean renderTelefone, boolean renderPeriodo, Object... parametros) throws SQLException, ParseException {
-		List<ModelLogin> retorno = new ArrayList<>();
-		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+		var retorno = new ArrayList<ModelLogin>();
+		try (var statement = connection.prepareStatement(sql)) {
 			if (nonNull(parametros)) {
 				if (parametros[0] instanceof String parameter) statement.setString(1, parameter);
 				if (parametros[0] instanceof Long parameter) statement.setLong(1, parameter);
@@ -137,7 +173,7 @@ public class DAOUsuarioRepository implements Serializable {
 					statement.setDate(3, Date.valueOf(new SimpleDateFormat("yyyy-mm-dd").format(new SimpleDateFormat("dd/mm/yyyy").parse((String) parametros[2]))));
 				}
 			}
-			ResultSet resultado = statement.executeQuery();
+			var resultado = statement.executeQuery();
 			while (resultado.next()) {
 				var modelLogin = new ModelLogin(
 					resultado.getLong("id"),
@@ -178,9 +214,9 @@ public class DAOUsuarioRepository implements Serializable {
 	
 	public boolean validarLogin(String login) throws SQLException {
 		var sql = "SELECT COUNT(1) > 0 AS existe FROM model_login WHERE UPPER(login) = UPPER(?)";
-		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (var statement = connection.prepareStatement(sql)) {
 			statement.setString(1, login);
-			ResultSet resultado = statement.executeQuery();
+			var resultado = statement.executeQuery();
 			resultado.next();
 			return resultado.getBoolean("existe");
 		}
@@ -188,7 +224,7 @@ public class DAOUsuarioRepository implements Serializable {
 	
 	public void deletarUsuario(String id) throws SQLException {
 		var sql = "DELETE FROM model_login WHERE id = ? AND useradmin IS FALSE";
-		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (var statement = connection.prepareStatement(sql)) {
 			statement.setLong(1, Long.parseLong(id));
 			statement.executeUpdate();
 			connection.commit();
@@ -197,7 +233,7 @@ public class DAOUsuarioRepository implements Serializable {
 	
 	public int getTotalPaginas(Long usuarioLogado) throws SQLException {
 		var sql = "SELECT COUNT(1) AS total FROM model_login WHERE usuario_id =?";
-		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (var statement = connection.prepareStatement(sql)) {
 			statement.setLong(1, usuarioLogado);
 			return getCalculoTotalPaginas(statement);
 		}
@@ -205,7 +241,7 @@ public class DAOUsuarioRepository implements Serializable {
 	
 	public int getTotalPaginasPorNome(String nome, Long usuarioLogado) throws SQLException {
 		var sql = "SELECT COUNT(1) AS total FROM model_login WHERE UPPER(nome) LIKE UPPER(?) AND useradmin IS FALSE AND usuario_id = ?";
-		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+		try (var statement = connection.prepareStatement(sql)) {
 			statement.setString(1, "%" + nome + "%");
 			statement.setLong(2, usuarioLogado);
 			return getCalculoTotalPaginas(statement);
@@ -213,22 +249,22 @@ public class DAOUsuarioRepository implements Serializable {
 	}
 	
 	private int getCalculoTotalPaginas(PreparedStatement statement) throws SQLException {
-		ResultSet resultado = statement.executeQuery();
+		var resultado = statement.executeQuery();
 		resultado.next();
-		Double cadastros = resultado.getDouble("total");
-		Double registrosPorPagina = 5.0;
+		var cadastros = resultado.getDouble("total");
+		var registrosPorPagina = 5.0;
 		Double pagina = cadastros / registrosPorPagina;
-		Double resto = pagina % 2;
+		var resto = pagina % 2;
 		if (resto > 0) pagina ++;
 		return pagina.intValue();
 	}
 	
 	private List<ModelTelefone> consultarTelefones(Long isUsuarioPai) throws SQLException, ParseException {
 		var sql = "SELECT * FROM telefone WHERE usuario_pai_id = ?";
-		List<ModelTelefone> retorno = new ArrayList<>();
-		try (PreparedStatement statement = connection.prepareStatement(sql)) {
+		var retorno = new ArrayList<ModelTelefone>();
+		try (var statement = connection.prepareStatement(sql)) {
 			statement.setLong(1, isUsuarioPai);
-			ResultSet resultado = statement.executeQuery();
+			var resultado = statement.executeQuery();
 			while (resultado.next()) {
 				retorno.add(new ModelTelefone(
 					resultado.getLong("id"),
