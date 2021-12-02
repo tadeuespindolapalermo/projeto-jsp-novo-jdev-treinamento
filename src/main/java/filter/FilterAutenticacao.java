@@ -28,6 +28,7 @@ import jakarta.servlet.http.HttpSession;
 public class FilterAutenticacao implements Filter {
 
 	private Connection connection;
+	private DAOVersionadorBancoRepository daoVersionadorBancoRepository;
 
 	@Override
 	public void destroy() {
@@ -65,36 +66,23 @@ public class FilterAutenticacao implements Filter {
 				sqlException.printStackTrace();
 			}
 		}
-
 	}
 
 	@Override
 	public void init(FilterConfig filterConfig) throws ServletException {
 		connection = SingleConnection.getConnection();
-
-		DAOVersionadorBancoRepository daoVersionador = new DAOVersionadorBancoRepository();
-
-		String pathSQL = filterConfig.getServletContext().getRealPath("versionadorbancosql") + File.separator;
-
+		daoVersionadorBancoRepository = new DAOVersionadorBancoRepository();
+		executarVersionador(filterConfig);
+	}
+	
+	private void executarVersionador(FilterConfig filterConfig) {
+		var pathSQL = filterConfig.getServletContext().getRealPath("versionadorbancosql") + File.separator;
 		var filesSQL = new File(pathSQL).listFiles();
-
 		try {
-			for (File file : filesSQL) {
-				boolean arquivoExecutado = daoVersionador.arquivoSQLExecutado(file.getName());
+			for (var file : filesSQL) {
+				boolean arquivoExecutado = daoVersionadorBancoRepository.arquivoSQLExecutado(file.getName());
 				if (!arquivoExecutado) {
-					try (var fileInputStream = new FileInputStream(file);
-						 var scanner = new Scanner(fileInputStream, StandardCharsets.UTF_8)) {
-						
-						StringBuilder sql = new StringBuilder();
-						while (scanner.hasNext()) {
-							sql.append(scanner.nextLine()).append("\n");
-						}
-						connection.prepareStatement(sql.toString()).execute();
-						daoVersionador.gravarArquivoSQLExecutado(file.getName());
-						connection.commit();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					versionar(file);
 				}
 			}
 		} catch (SQLException e) {
@@ -104,6 +92,24 @@ public class FilterAutenticacao implements Filter {
 			} catch (SQLException sqlException) {
 				sqlException.printStackTrace();
 			}
+		}
+	}
+	
+	private void versionar(File file) throws SQLException {
+		try (var fileInputStream = new FileInputStream(file);
+			 var scanner = new Scanner(fileInputStream, StandardCharsets.UTF_8)) {
+				
+			StringBuilder sql = new StringBuilder();
+			while (scanner.hasNext()) {
+				sql.append(scanner.nextLine()).append("\n");
+			}
+			try (var ps = connection.prepareStatement(sql.toString())) {
+				ps.execute();
+				daoVersionadorBancoRepository.gravarArquivoSQLExecutado(file.getName());
+				connection.commit();	
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 

@@ -70,6 +70,23 @@
 		    <version>6.18.1</version>
 		</dependency>
 		
+		<!-- Para geração do WAR (dependências que estavam sendo providas pelo Tomcat) -->
+		<dependency>
+			<groupId>tomcat</groupId>
+			<artifactId>tomcat-util</artifactId>
+			<version>5.5.23</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-coyote</artifactId>
+			<version>10.1.0-M5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-compress</artifactId>
+			<version>1.21</version>
+		</dependency>
+		
 
 	</dependencies>
 
